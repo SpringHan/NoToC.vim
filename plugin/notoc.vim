@@ -21,8 +21,7 @@ let g:NoToCLoaded = 1
 " Commands {{{
 " }}}
 
-" FoldRule {{{1
-" FUNCTION: NtcFoldRule() {{{2
+" FUNCTION: NtcFoldRule() {{{
 function! NtcFoldRule(lnum)
 	if getline(a:lnum) =~ '\(^-\)\s'
 		return 1
@@ -33,12 +32,13 @@ function! NtcFoldRule(lnum)
 	elseif getline(a:lnum) =~ '\(^+++-\)\s'
 		return 4
 	elseif getline(a:lnum) =~ '\(^-\*\)\s'
-		return -1
+		return 1
+	elseif getline(a:lnum) =~ '\(^--\*\)\s'
+		return 2
 	else
 		return 0
 	endif
-endfunction " 2}}}
-" 1}}}
+endfunction " }}}
 
 " FUNCTION: s:LoadSyntax() {{{
 function! NtcLoadSyntax() abort
@@ -47,9 +47,11 @@ function! NtcLoadSyntax() abort
 				\ "autocmd! BufNewFile,BufRead *.ntc call NtcLoadSyntax() | return" :
 				\ "let g:NtcSyntaxLoaded = 1"
 	syntax clear
-	syntax match NoToCTodosLeader /\(^-\*\)\s/
+	syntax match NoToCTodoLeader /\(^-\*\)\s/
 	syntax match NoToCTodoContent /\(^-\*\s\[.\]\)\@<=\(.*\)/
-	syntax match NoToCTodoSign /\(^-\*\s\)\@<=\(\[.\]\)/
+	syntax match NoToCTodoTwoLeader /\(^--\*\)\s/
+	syntax match NoToCTodoTwoContent /\(^--\*\s\[.\]\)\@<=\(.*\)/
+	syntax match NoToCTodoSign /\(^-*\*\s\)\@<=\(\[.\]\)/
 	syntax match NoToCTitleOneLeader /\(^-\)\s/
 	syntax match NoToCTitleOneContent /\(^-\s\)\@<=\(.*\)/
 	syntax match NoToCTitleTwoLeader /\(^+-\)\s/
@@ -60,8 +62,10 @@ function! NtcLoadSyntax() abort
 	syntax match NoToCTitleFourContent /\(^+++-\s\)\@<=\(.*\)/
 	highlight NoToCDone cterm=bold ctermfg=223 ctermbg=235 gui=bold guifg=fg guibg=bg
 	highlight link NoToCTodoSign NoToCDone
-	highlight link NoToCTodosLeader SpecialKey
+	highlight link NoToCTodoLeader SpecialKey
 	highlight link NoToCTodoContent Title
+	highlight link NoToCTodoTwoLeader Conceal
+	highlight link NoToCTodoTwoContent Normal
 	highlight link NoToCTitleOneLeader WarningMsg
 	highlight link NoToCTitleOneContent MoreMsg
 	highlight link NoToCTitleTwoLeader Question
@@ -79,7 +83,7 @@ endfunction " }}}
 " FUNCTION: s:TodoControl() {{{
 function! s:TodoControl() abort
 	execute &filetype != 'ntc' ? "return" : ""
-	if matchstr(getline(line('.')), '\(^-\*\s\)\@<=\(\[.\]\)') == '[ ]'
-	elseif matchstr(getline(line('.')), '\(^-\*\s\)\@<=\(\[.\]\)') == '[x]'
+	if matchstr(getline(line('.')), '\(^-*\*\s\)\@<=\(\[.\]\)') == '[ ]'
+	elseif matchstr(getline(line('.')), '\(^-*\*\s\)\@<=\(\[.\]\)') == '[x]'
 	endif
 endfunction " }}}
