@@ -11,8 +11,34 @@ if exists('g:NoToCLoaded')
 endif
 autocmd BufNewFile,BufRead *.ntc setfiletype ntc
 autocmd BufNewFile,BufRead *.ntc call NtcLoadSyntax()
+autocmd BufEnter *.ntc setlocal foldmethod=expr
+autocmd BufNewFile,BufRead,BufWrite,BufWritePost *.ntc
+			\ setlocal foldexpr=NtcFoldRule(v:lnum)
+autocmd BufEnter *.ntc nnoremap <silent><buffer> <Tab> :silent! normal za<CR>
 let g:NoToCLoaded = 1
 " }}}
+
+" Commands {{{
+" }}}
+
+" FoldRule {{{1
+" FUNCTION: NtcFoldRule() {{{2
+function! NtcFoldRule(lnum)
+	if getline(a:lnum) =~ '\(^-\)\s'
+		return 1
+	elseif getline(a:lnum) =~ '\(^+-\)\s'
+		return 2
+	elseif getline(a:lnum) =~ '\(^++-\)\s'
+		return 3
+	elseif getline(a:lnum) =~ '\(^+++-\)\s'
+		return 4
+	elseif getline(a:lnum) =~ '\(^-\*\)\s'
+		return -1
+	else
+		return 0
+	endif
+endfunction " 2}}}
+" 1}}}
 
 " FUNCTION: s:LoadSyntax() {{{
 function! NtcLoadSyntax() abort
@@ -21,8 +47,9 @@ function! NtcLoadSyntax() abort
 				\ "autocmd! BufNewFile,BufRead *.ntc call NtcLoadSyntax() | return" :
 				\ "let g:NtcSyntaxLoaded = 1"
 	syntax clear
-	syntax match NoToCTodosLeader /^-\*/
-	syntax match NoToCTodoContent /\(^-\*\s\)\@<=\(.*\)/
+	syntax match NoToCTodosLeader /\(^-\*\)\s/
+	syntax match NoToCTodoContent /\(^-\*\s\[.\]\)\@<=\(.*\)/
+	syntax match NoToCTodoSign /\(^-\*\s\)\@<=\(\[.\]\)/
 	syntax match NoToCTitleOneLeader /\(^-\)\s/
 	syntax match NoToCTitleOneContent /\(^-\s\)\@<=\(.*\)/
 	syntax match NoToCTitleTwoLeader /\(^+-\)\s/
@@ -31,6 +58,8 @@ function! NtcLoadSyntax() abort
 	syntax match NoToCTitleThreeContent /\(^++-\s\)\@<=\(.*\)/
 	syntax match NoToCTitleFourLeader /\(^+++-\)\s/
 	syntax match NoToCTitleFourContent /\(^+++-\s\)\@<=\(.*\)/
+	highlight NoToCDone cterm=bold ctermfg=223 ctermbg=235 gui=bold guifg=fg guibg=bg
+	highlight link NoToCTodoSign NoToCDone
 	highlight link NoToCTodosLeader SpecialKey
 	highlight link NoToCTodoContent Title
 	highlight link NoToCTitleOneLeader WarningMsg
@@ -43,5 +72,14 @@ function! NtcLoadSyntax() abort
 	highlight link NoToCTitleFourContent Normal
 endfunction " }}}
 
-function! s:FoldTitle() abort
-endfunction
+" FUNCTION: s:JumpToNext() {{{
+function! s:JumpToNext() abort
+endfunction " }}}
+
+" FUNCTION: s:TodoControl() {{{
+function! s:TodoControl() abort
+	execute &filetype != 'ntc' ? "return" : ""
+	if matchstr(getline(line('.')), '\(^-\*\s\)\@<=\(\[.\]\)') == '[ ]'
+	elseif matchstr(getline(line('.')), '\(^-\*\s\)\@<=\(\[.\]\)') == '[x]'
+	endif
+endfunction " }}}
