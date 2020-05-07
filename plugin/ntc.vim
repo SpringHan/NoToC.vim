@@ -13,10 +13,10 @@ let g:NoToCLoaded = 1
 " runtime fold/ntc.vim " Load the fold script file
 autocmd BufNewFile,BufRead *.ntc setfiletype ntc
 autocmd BufNewFile,BufRead *.ntc call NtcLoadSyntax()
-autocmd BufEnter *.ntc setlocal foldmethod=expr
-autocmd BufNewFile,BufRead,BufWrite,TextChanged *.ntc
-			\ setlocal foldexpr=NtcFoldRule(v:lnum)
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <Tab> :silent! normal za<CR>
+" autocmd BufEnter *.ntc setlocal foldmethod=expr
+" autocmd BufNewFile,BufRead,BufWrite,TextChanged *.ntc
+			" \ setlocal foldexpr=NtcFoldRule(v:lnum)
+" autocmd BufEnter *.ntc nnoremap <silent><buffer> <Tab> :silent! normal za<CR>
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <CR> :NtcTodoControl<CR>
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-o> :NtcNewItem<CR>
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-y> :NtcYankItem<CR>
@@ -29,33 +29,33 @@ command! -nargs=0 NtcYankItem call s:YankItem()
 " }}}
 
 " FUNCTION: {{{ NtcFoldRule()
-function! NtcFoldRule(lnum)
-	if getline(a:lnum) =~ '\(^-\)\s'
-		return 1
-	elseif getline(a:lnum) =~ '\(^+-\)\s'
-		return 2
-	elseif getline(a:lnum) =~ '\(^++-\)\s'
-		return 3
-	elseif getline(a:lnum) =~ '\(^+++-\)\s'
-		return 4
-	elseif getline(a:lnum) =~ '\(^-\*\)\s'
-		if getline(a:lnum - 1) =~ '^\n'
-			return 1
-		endif
-		return 'a1'
-	elseif getline(a:lnum) =~ '\(^--\*\)\s'
-		if getline(a:lnum - 1) =~ '\(^-\*\)\s'
-			return 'a1'
-		elseif getline(a:lnum - 1) =~ '\(^--\*\)\s'
-			return '='
-		endif
-		return 2
-	elseif getline(a:lnum) =~ '^\t\(.*\)'
-		return 'a1'
-	else
-		return 0
-	endif
-endfunction " }}}
+" function! NtcFoldRule(lnum)
+	" if getline(a:lnum) =~ '\(^-\)\s'
+		" return 1
+	" elseif getline(a:lnum) =~ '\(^+-\)\s'
+		" return 2
+	" elseif getline(a:lnum) =~ '\(^++-\)\s'
+		" return 3
+	" elseif getline(a:lnum) =~ '\(^+++-\)\s'
+		" return 4
+	" elseif getline(a:lnum) =~ '\(^-\*\)\s'
+		" if getline(a:lnum - 1) =~ '^\n'
+			" return 1
+		" endif
+		" return 'a1'
+	" elseif getline(a:lnum) =~ '\(^--\*\)\s'
+		" if getline(a:lnum - 1) =~ '\(^-\*\)\s'
+			" return 'a1'
+		" elseif getline(a:lnum - 1) =~ '\(^--\*\)\s'
+			" return '='
+		" endif
+		" return 2
+	" elseif getline(a:lnum) =~ '^\t\(.*\)'
+		" return 'a1'
+	" else
+		" return 0
+	" endif
+" endfunction " }}}
 
 " FUNCTION: {{{ s:LoadSyntax()
 function! NtcLoadSyntax() abort
