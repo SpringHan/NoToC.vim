@@ -143,6 +143,9 @@ endfunction " }}}
 " `line` is the current line number, `lineCont` is the current line's
 " content. ] { Judgment method to create a new item. }
 function! s:JudgeCont(type, line, lineCont) abort
+	if getline(a:line + 1) != ''
+		call append(a:line, [''])
+	endif
 	if a:type == 2
 		call setline(a:line + 1, a:lineCont =~ '^\n' ? '- ' : a:lineCont =~
 					\ '\(^-\)\s' ? '+- ' : a:lineCont =~ '\(^+-\)\s' ? '++- ' :
