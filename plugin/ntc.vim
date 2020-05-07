@@ -9,6 +9,8 @@
 if exists('g:NoToCLoaded')
 	finish
 endif
+let g:NoToCLoaded = 1
+" runtime fold/ntc.vim " Load the fold script file
 autocmd BufNewFile,BufRead *.ntc setfiletype ntc
 autocmd BufNewFile,BufRead *.ntc call NtcLoadSyntax()
 autocmd BufEnter *.ntc setlocal foldmethod=expr
@@ -18,7 +20,6 @@ autocmd BufEnter *.ntc nnoremap <silent><buffer> <Tab> :silent! normal za<CR>
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <CR> :NtcTodoControl<CR>
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-o> :NtcNewItem<CR>
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-y> :NtcYankItem<CR>
-let g:NoToCLoaded = 1
 " }}}
 
 " Commands {{{
@@ -91,10 +92,6 @@ function! NtcLoadSyntax() abort
 	highlight link NoToCTitleFourLeader Question
 	highlight link NoToCTitleFourContent Normal
 endfunction " }}}
-
-" FUNCTION: {{{ s:JumpToNext()
-" function! s:JumpToNext() abort
-" endfunction " }}}
 
 " FUNCTION: {{{ s:TodoNodes(lastNodeLine, foldType)
 function! s:TodoNodes(lastNodeLine, foldType) abort
@@ -199,17 +196,6 @@ endfunction " }}}
 function! s:NewItem() abort
 	let l:currentLine = line('.')
 	let l:currentLineContent = getline(l:currentLine)
-	
-	" execute \"vertical botright 10new"
-	" let s:toggleBuf = bufnr('')
-	" setlocal nonumber buftype=nofile bufhidden=wipe noswapfile nowrap nobuflisted
-				" \ modifiable nocursorline nofoldenable norelativenumber
-				" \ statusline=>\ Help
-	" call setline(1, 'Values:')
-	" call append(1, ['[t1/t2] level/two level of Todo', '[n] title',
-				" \ '[o] new line', '[c] notes', '[x] cancel'])
-	" setlocal nomodifiable
-	
 	let l:newItem = input('Input the new item type:')
 	execute l:newItem == 'x' ? "return" : ""
 	call s:JudgeCont(l:newItem == 't1' ? 0 : l:newItem == 't2' ? 1 :
