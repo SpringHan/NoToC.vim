@@ -153,6 +153,9 @@ function! s:JudgeCont(type, line, lineCont) abort
 		call cursor(a:line + 1, 0)
 		startinsert!
 	elseif a:type == 3
+		call setline(a:line + 1, '')
+		call cursor(a:line + 1, 0)
+	elseif a:type == 4
 		call setline(a:line + 1, '	')
 		call cursor(a:line + 1, 0)
 		startinsert!
@@ -167,22 +170,21 @@ endfunction " }}}
 function! s:NewItem() abort
 	let l:currentLine = line('.')
 	let l:currentLineContent = getline(l:currentLine)
-	if !exists('g:NotoCHelp') || g:NoToCHelp == 1
-		setlocal splitbelow
-		silent execute "2split Help"
-		let l:toggleBuf = bufnr('')
-		setlocal nonumber buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
-					\ modifiable nocursorline nofoldenable norelativenumber
-		call setline(1, 'Values:')
-		call setline(2, '[t1/t2] level/two level of Todo    [n] title    '.
-					\ '[c] notes    [x] cancel')
-		setlocal nomodifiable
-		let l:newItem = input('Input the new item type:')
-		execute "bd ".l:toggleBuf
-	endif
+	
+	" execute \"vertical botright 10new"
+	" let s:toggleBuf = bufnr('')
+	" setlocal nonumber buftype=nofile bufhidden=wipe noswapfile nowrap nobuflisted
+				" \ modifiable nocursorline nofoldenable norelativenumber
+				" \ statusline=>\ Help
+	" call setline(1, 'Values:')
+	" call append(1, ['[t1/t2] level/two level of Todo', '[n] title',
+				" \ '[o] new line', '[c] notes', '[x] cancel'])
+	" setlocal nomodifiable
+	
+	let l:newItem = input('Input the new item type:')
 	execute l:newItem == 'x' ? "return" : ""
 	call s:JudgeCont(l:newItem == 't1' ? 0 : l:newItem == 't2' ? 1 :
-				\ l:newItem == 'n' ? 2 : 3,
+				\ l:newItem == 'n' ? 2 : l:newItem == 'o' ? 3 : 4,
 				\ l:currentLine, l:currentLineContent)
-	unlet l:currentLine l:currentLineContent l:toggleBuf l:newItem
+	unlet l:currentLine l:currentLineContent l:newItem
 endfunction " }}}
