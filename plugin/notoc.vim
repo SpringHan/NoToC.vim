@@ -17,12 +17,14 @@ autocmd BufNewFile,BufRead,BufWrite,TextChanged *.ntc
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <Tab> :silent! normal za<CR>
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <CR> :NtcTodoControl<CR>
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-o> :NtcNewItem<CR>
+autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-y> :NtcYankItem<CR>
 let g:NoToCLoaded = 1
 " }}}
 
 " Commands {{{
 command! -nargs=0 NtcTodoControl call s:TodoControl()
 command! -nargs=0 NtcNewItem call s:NewItem()
+command! -nargs=0 NtcYankItem call s:YankItem()
 " }}}
 
 " FUNCTION: {{{ NtcFoldRule()
@@ -144,10 +146,10 @@ endfunction " }}}
 " content. ] { Judgment method to create a new item. }
 function! s:JudgeCont(type, line, lineCont) abort
 	if getline(a:line + 1) != ''
-		call append(a:line, [''])
+		call append(a:line, '')
 	endif
 	if a:type == 2
-		call setline(a:line + 1, a:lineCont =~ '^\n' ? '- ' : a:lineCont =~
+		call setline(a:line + 1, a:lineCont =~ '^\s*$' ? '- ' : a:lineCont =~
 					\ '\(^-\)\s' ? '+- ' : a:lineCont =~ '\(^+-\)\s' ? '++- ' :
 					\ a:lineCont =~ '\(^++-\)\s' ? '+++- ' : '')
 		call cursor(a:line + 1, 0)
@@ -159,11 +161,38 @@ function! s:JudgeCont(type, line, lineCont) abort
 		call setline(a:line + 1, '	')
 		call cursor(a:line + 1, 0)
 		startinsert!
+	elseif a:type == -1
+		return
 	else
 		call setline(a:line + 1, a:type == 0 ? '-* [ ] ' : '--* [ ] ')
 		call cursor(a:line + 1, 0)
 		startinsert!
 	endif
+endfunction " }}}
+
+" FUNCTION: {{{ s:YankItem() { Create a new item as same as the previous }
+function! s:YankItem() abort
+	let l:currentLine = line('.')
+	let l:currentLineContent = getline(l:currentLine)
+	if getline(l:currentLine + 1) != ''
+		call append(l:currentLine, '')
+	endif
+	if l:currentLineContent =~ '\(^-*\*\s\[.\]\s\)'
+		call setline(l:currentLine + 1, matchstr(l:currentLineContent,
+					\ '\(^-*\*\)\(\s\[.\]\s.*\)\@=').' [ ] ')
+		call cursor(l:currentLine + 1, 0)
+		startinsert!
+	elseif l:currentLineContent =~ '\(^.*-\s\)'
+		call setline(l:currentLine + 1, matchstr(l:currentLineContent,
+					\ '\(^.*-\)\(\s.*\)\@=').' ')
+		call cursor(l:currentLine + 1, 0)
+		startinsert!
+	elseif l:currentLineContent =~ '\t\(.*\)'
+		call setline(l:currentLine + 1, '	')
+		call cursor(l:currentLine + 1, 0)
+		startinsert!
+	endif
+	unlet l:currentLine l:currentLineContent
 endfunction " }}}
 
 " FUNCTION: {{{ s:NewItem() { Create a new item. }
@@ -184,7 +213,8 @@ function! s:NewItem() abort
 	let l:newItem = input('Input the new item type:')
 	execute l:newItem == 'x' ? "return" : ""
 	call s:JudgeCont(l:newItem == 't1' ? 0 : l:newItem == 't2' ? 1 :
-				\ l:newItem == 'n' ? 2 : l:newItem == 'o' ? 3 : 4,
+				\ l:newItem == 'n' ? 2 : l:newItem == 'o' ? 3 :
+				\ l:newItem == 'c' ? 4 : -1,
 				\ l:currentLine, l:currentLineContent)
 	unlet l:currentLine l:currentLineContent l:newItem
 endfunction " }}}
