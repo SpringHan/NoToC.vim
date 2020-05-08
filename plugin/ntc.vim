@@ -12,7 +12,7 @@ endif
 let g:NoToCLoaded = 1
 " runtime fold/ntc.vim " Load the fold script file
 autocmd BufNewFile,BufRead *.ntc setfiletype ntc
-autocmd BufNewFile,BufRead *.ntc call NtcLoadSyntax()
+autocmd BufNewFile,BufRead *.ntc NtcSyntaxReload
 " autocmd BufEnter *.ntc setlocal foldmethod=expr
 " autocmd BufNewFile,BufRead,BufWrite,TextChanged *.ntc
 			" \ setlocal foldexpr=NtcFoldRule(v:lnum)
@@ -20,12 +20,15 @@ autocmd BufNewFile,BufRead *.ntc call NtcLoadSyntax()
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <CR> :NtcTodoControl<CR>
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-o> :NtcNewItem<CR>
 autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-y> :NtcYankItem<CR>
+autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-c> :NtcTypeChang<CR>
 " }}}
 
 " Commands {{{
 command! -nargs=0 NtcTodoControl call s:TodoControl()
-command! -nargs=0 NtcNewItem call s:NewItem()
+command! -nargs=0 NtcNewItem call s:ItemAct(0)
+command! -nargs=0 NtcTypeChange call s:ItemAct(1)
 command! -nargs=0 NtcYankItem call s:YankItem()
+command! -nargs=0 NtcSyntaxReload call s:LoadSyntax()
 " }}}
 
 " FUNCTION: {{{ NtcFoldRule()
@@ -57,8 +60,8 @@ command! -nargs=0 NtcYankItem call s:YankItem()
 	" endif
 " endfunction " }}}
 
-" FUNCTION: {{{ s:LoadSyntax()
-function! NtcLoadSyntax() abort
+" FUNCTION: {{{ s:LoadSyntax() { Load the syntax }
+function! s:LoadSyntax() abort
 	execute &filetype != 'ntc' ? "return" : ""
 	execute exists('g:NtcSyntaxLoaded') ?
 				\ "autocmd! BufNewFile,BufRead *.ntc call NtcLoadSyntax() | return" :
@@ -246,17 +249,35 @@ function! s:YankItem() abort
 	unlet l:currentLine l:currentLineContent
 endfunction " }}}
 
-" FUNCTION: {{{ s:NewItem() { Create a new item. }
-function! s:NewItem() abort
+" FUNCTION: {{{ s:ItemAct(type)[ `type` is the action type for items ] {
+" Create a new item or change a item's type }
+function! s:ItemAct(type) abort
 	let l:currentLine = line('.')
 	let l:currentLineContent = getline(l:currentLine)
-	let l:newItem = input('Input the new item type:')
-	execute l:newItem == 'x' ? "return" : ""
-	call s:JudgeCont(l:newItem == 't1' ? 0 : l:newItem == 't2' ? 1 :
-				\ l:newItem == 'n' ? 2 : l:newItem == 'o' ? 3 :
-				\ l:newItem == 'c' ? 4 : l:newItem == 'n1' ? 5 : l:newItem == 'n2'
-				\ ? 6 : l:newItem == 'n3' ? 7 : l:newItem == 'n4' ? 8 :
-				\ l:newItem == 't' ? 9 : -1,
-				\ l:currentLine, l:currentLineContent)
-	unlet l:currentLine l:currentLineContent l:newItem
+	if a:type == 0
+		let l:newItem = input('Input the new item type:')
+		execute l:newItem == 'x' || l:newItem == '' ? "return" : ""
+		call s:JudgeCont(l:newItem == 't1' ? 0 : l:newItem == 't2' ? 1 :
+					\ l:newItem == 'n' ? 2 : l:newItem == 'o' ? 3 :
+					\ l:newItem == 'c' ? 4 : l:newItem == 'n1' ? 5 : l:newItem == 'n2'
+					\ ? 6 : l:newItem == 'n3' ? 7 : l:newItem == 'n4' ? 8 :
+					\ l:newItem == 't' ? 9 : -1,
+					\ l:currentLine, l:currentLineContent)
+		unlet l:currentLine l:currentLineContent l:newItem
+	elseif a:type == 1
+		let l:itemNewType = input('Input the item new type:')
+		execute l:itemNewType == 'x' || l:itemNewType == '' ? "return" : ""
+		let l:content = matchstr(l:currentLineContent, l:currentLineContent =~
+					\ '\(^.*-\)\s\(.*\)' ? '\(^.*-\s\)\@<=\(.*\)' :
+					\ l:currentLineContent =~ '^-*\*\s\[.\]\s.*' ?
+					\ '\(^-*\*\s\[.\]\s\)\@<=\(.*\)' : l:currentLineContent =~ '^\t.*' ?
+					\ '\(^\t\)\@<=\(.*\)' : '\(.*\)')
+		let l:newType = l:itemNewType == 't1' ? '-* [ ] ' :
+					\ l:itemNewType == 't2' ? '--* [ ] ' : l:itemNewType == 'n1' ?
+					\ '- ' : l:itemNewType == 'n2' ? '+- ' : l:itemNewType == 'n3' ?
+					\ '++- ' : l:itemNewType == 'n4' ? '+++- ' : l:itemNewType == 'c' ?
+					\ '	' : ''
+		call setline(l:currentLine, l:newType.l:content)
+		unlet l:currentLine l:currentLineContent l:itemNewType l:content l:newType
+	endif
 endfunction " }}}
