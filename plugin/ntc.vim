@@ -143,7 +143,33 @@ endfunction " }}}
 " return the node item level }
 function! s:SearchItem(type, lineNum) abort
 	if a:type == 0
+		for l:line in reverse(range(1, a:lineNum))
+			let l:lineCont = getline(l:line)
+			if l:lineCont =~ '\(^.*-\)\s\(.*\)'
+				let l:prevLevel = matchstr(l:lineCont, '\(^.*-\)\(\s\.*\)\@=')
+				break
+			elseif l:lineCont == ''
+				let l:prevLevel = 'none'
+				break
+			endif
+		endfor
+		echom l:prevLevel
+		unlet l:line l:lineCont
+		return l:prevLevel == '-' ? 2 : l:prevLevel == '+-' ? 3 : l:prevLevel ==
+					\ '++-' ? 4 : l:prevLevel == 'none' ? 1 : 0
 	elseif a:type == 1
+		for l:line in reverse(range(1, a:lineNum))
+			let l:lineCont = getline(l:line)
+			if l:lineCont =~ '^-*\*\s\[.\]\s.*'
+				let l:prevLevel = matchstr(l:lineCont, '\(^-*\*\)\(\s\[.\]\s.*\)\@=')
+				break
+			elseif l:lineCont == ''
+				let l:prevLevel = 'none'
+				break
+			endif
+		endfor
+		unlet l:line l:lineCont
+		return l:prevLevel == 'none' ? 1 : l:prevLevel == '-*' ? 2 : 0
 	endif
 endfunction " }}}
 
@@ -156,13 +182,19 @@ function! s:JudgeCont(type, line, lineCont) abort
 		execute a:line == 1 ? a:lineCont != '' ? "call append(a:line + 1, '')" :
 					\ "" : ""
 	endif
-	if a:type == 2
+	if a:type == 1 || a:type == 0
 		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1,
-					\ a:lineCont =~ '^\s*$' ? '- ' : a:lineCont =~
-					\ '\(^-\)\s' ? '+- ' : a:lineCont =~ '\(^+-\)\s' ? '++- ' :
-					\ a:lineCont =~ '\(^++-\)\s' ? '+++- ' : '')
+					\ a:type == 0 ? '-* [ ] ' : '--* [ ] ')
 		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
 		startinsert!
+	elseif a:type == 2
+		let l:titleLevel = s:SearchItem(0, a:line)
+		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1,
+					\ l:titleLevel == 1 ? '- ' : l:titleLevel == 2 ? '+- ' :
+					\ l:titleLevel == 3 ? '++- ' : l:titleLevel == 4 ? '+++- ' : '')
+		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
+		startinsert!
+		unlet l:titleLevel
 	elseif a:type == 3
 		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, '')
 		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
@@ -170,11 +202,20 @@ function! s:JudgeCont(type, line, lineCont) abort
 		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, '	')
 		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
 		startinsert!
+	elseif a:type == 9
+		let l:todolevel = s:SearchItem(1, a:line)
+		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1,
+					\ l:todolevel == 1 ? '-* [ ] ' : l:todolevel == 2 ? '--* [ ] ' : '')
+		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
+		startinsert!
+		unlet l:todolevel
 	elseif a:type == -1
+		echohl Error | echom "[NoToC.vim]: The type of item is error!" | echohl None
 		return
 	else
 		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1,
-					\ a:type == 0 ? '-* [ ] ' : '--* [ ] ')
+					\ a:type == 5 ? '- ' : a:type == 6 ? '+- ' : a:type == 7 ?
+					\ '++- ' : '+++- ')
 		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
 		startinsert!
 	endif
@@ -213,7 +254,9 @@ function! s:NewItem() abort
 	execute l:newItem == 'x' ? "return" : ""
 	call s:JudgeCont(l:newItem == 't1' ? 0 : l:newItem == 't2' ? 1 :
 				\ l:newItem == 'n' ? 2 : l:newItem == 'o' ? 3 :
-				\ l:newItem == 'c' ? 4 : -1,
+				\ l:newItem == 'c' ? 4 : l:newItem == 'n1' ? 5 : l:newItem == 'n2'
+				\ ? 6 : l:newItem == 'n3' ? 7 : l:newItem == 'n4' ? 8 :
+				\ l:newItem == 't' ? 9 : -1,
 				\ l:currentLine, l:currentLineContent)
 	unlet l:currentLine l:currentLineContent l:newItem
 endfunction " }}}
