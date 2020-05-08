@@ -138,31 +138,44 @@ function! s:TodoControl() abort
 	unlet l:todoType l:todoContent l:matchResult
 endfunction " }}}
 
+" FUNCTION: {{{ s:SearchItem(type, lineNum)[ `type` is the item's type,
+" `lineNum` is the number of the current line ] { Search the parent item and
+" return the node item level }
+function! s:SearchItem(type, lineNum) abort
+	if a:type == 0
+	elseif a:type == 1
+	endif
+endfunction " }}}
+
 " FUNCTION: {{{ s:JudgeCont(type, lineCont)[ `type` is the new item's type,
 " `line` is the current line number, `lineCont` is the current line's
 " content. ] { Judgment method to create a new item. }
 function! s:JudgeCont(type, line, lineCont) abort
-	if getline(a:line + 1) != ''
-		call append(a:line, '')
+	execute getline(a:line + 1) != '' ? "call append(a:line, '')" : ""
+	if getline(a:line + 2) != ''
+		execute a:line == 1 ? a:lineCont != '' ? "call append(a:line + 1, '')" :
+					\ "" : ""
 	endif
 	if a:type == 2
-		call setline(a:line + 1, a:lineCont =~ '^\s*$' ? '- ' : a:lineCont =~
+		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1,
+					\ a:lineCont =~ '^\s*$' ? '- ' : a:lineCont =~
 					\ '\(^-\)\s' ? '+- ' : a:lineCont =~ '\(^+-\)\s' ? '++- ' :
 					\ a:lineCont =~ '\(^++-\)\s' ? '+++- ' : '')
-		call cursor(a:line + 1, 0)
+		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
 		startinsert!
 	elseif a:type == 3
-		call setline(a:line + 1, '')
-		call cursor(a:line + 1, 0)
+		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, '')
+		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
 	elseif a:type == 4
-		call setline(a:line + 1, '	')
-		call cursor(a:line + 1, 0)
+		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, '	')
+		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
 		startinsert!
 	elseif a:type == -1
 		return
 	else
-		call setline(a:line + 1, a:type == 0 ? '-* [ ] ' : '--* [ ] ')
-		call cursor(a:line + 1, 0)
+		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1,
+					\ a:type == 0 ? '-* [ ] ' : '--* [ ] ')
+		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
 		startinsert!
 	endif
 endfunction " }}}
