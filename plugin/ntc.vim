@@ -400,3 +400,42 @@ function! s:ResetCont() abort
 	startinsert!
 	unlet l:line l:cont l:itemType l:itemLevel l:itemLeader
 endfunction " }}}
+
+" FUNCTION: {{{ s:TimeMatch(content) [ `content` is the content of the todo
+" which needs to match ] { return the time-refresh or time-defined todo's info }
+function! s:TimeMatch(content) abort
+endfunction " }}}
+
+" FUNCTION: {{{ s:InitialCache(file)[ `file` is the filename of the cache file need
+" to check ] { Initialize the cache }
+function! s:InitialCache(file) abort
+	execute !exists('g:NoToCCache') || type(g:NoToCCache) != 1 ?
+				\ "return" : ""
+	if a:file == ''
+		if empty(glob(g:NoToCCache))
+			call system('mkdir '.g:NoToCCache)
+		endif
+		return empty(glob(g:NoToCCache)) ? -1 : 1
+	endif
+endfunction " }}}
+
+function! s:CheckTime() abort
+endfunction
+
+" FUNCTION: {{{ s:RefreshTodo(type)[ `type` is the operation of the refresh
+" action ] { Refresh the todo by the time }
+function! s:RefreshTodo(type, debug) abort
+	let l:initialTest = s:InitialCache('')
+	execute l:initialTest == 0 || l:initialTest == -1 ?
+				\ "echohl Error | echom 'The g:NoToCCache is error.' | echohl None".
+				\ " | return" : ""
+	unlet l:initialTest
+	let l:currentCont = getline(line('.'))
+	if a:type == 0 " Add refresh time
+		" Add the time check
+		let l:refreshTime = str2nr(input('Enter the refresh interval of time:'))
+		call writefile([ '@@'.expand("%:p"), '--'.l:refreshTime,
+					\ '^^'.strftime('%d'), '&&'.l:currentCont ], g:NoToCCache.'refreshtime.txt', 'a')
+	elseif a:type == 1 " Get refresh time
+	endif
+endfunction " }}}
