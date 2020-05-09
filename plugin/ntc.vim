@@ -82,10 +82,11 @@ function! s:NodeLevel(cont, type) abort
 	if a:type == 0 " Title
 		let l:match = matchstr(a:cont, '\(^.*-\)\(\s.*\)\@=')
 		let l:level = l:match == '-' ? 1 : l:match == '+-' ? 2 : l:match == '++-'
-					\ ? 3 : l:match == '+++-' ? 4 : 0
+					\ ? 3 : l:match == '+++-' ? 4 : 4
 	elseif a:type == 1 " Todo
 		let l:match = matchstr(a:cont, '\(^-*\*\)\(\s\[.\].*\)\@=')
-		let l:level = l:match == '-*' ? 1 : l:match == '--*' ? 2 : 0
+		let l:level = l:match == '-*' ? 1 : l:match == '--*' ? 2 : 2
+		echom l:level
 	endif
 	unlet l:match
 	return l:level
@@ -234,11 +235,13 @@ endfunction " }}}
 " `line` is the current line number, `lineCont` is the current line's
 " content. ] { Judgment method to create a new item. }
 function! s:JudgeCont(type, line, lineCont) abort
-	execute getline(a:line + 1) != '' ? "call append(a:line, '')" : ""
 	if getline(a:line + 2) != ''
-		execute a:line != 1 ? "call append(a:line + 1, '')" :
-					\ a:lineCont != '' ? "call append(a:line + 1, '')" : ""
+		if getline(a:line + 1) == ''
+			execute a:line != 1 ? "call append(a:line + 1, '')" :
+						\ a:lineCont != '' ? "call append(a:line + 1, '')" : ""
+		endif
 	endif
+	execute getline(a:line + 1) != '' ? "call append(a:line, '')" : ""
 	if a:type == 1 || a:type == 0
 		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1,
 					\ a:type == 0 ? '-* [ ] ' : '--* [ ] ')
@@ -248,7 +251,8 @@ function! s:JudgeCont(type, line, lineCont) abort
 		let l:titleLevel = s:SearchItem(0, a:line)
 		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1,
 					\ l:titleLevel == 1 ? '- ' : l:titleLevel == 2 ? '+- ' :
-					\ l:titleLevel == 3 ? '++- ' : l:titleLevel == 4 ? '+++- ' : '')
+					\ l:titleLevel == 3 ? '++- ' : l:titleLevel == 4 ? '+++- ' :
+					\ l:titleLevel == 5 ? '+++- ' : '')
 		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
 		startinsert!
 		unlet l:titleLevel
@@ -262,7 +266,8 @@ function! s:JudgeCont(type, line, lineCont) abort
 	elseif a:type == 9
 		let l:todolevel = s:SearchItem(1, a:line)
 		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1,
-					\ l:todolevel == 1 ? '-* [ ] ' : l:todolevel == 2 ? '--* [ ] ' : '')
+					\ l:todolevel == 1 ? '-* [ ] ' : l:todolevel == 2 ? '--* [ ] ' :
+					\ l:todolevel == 3 ? '--* [ ] ' : '')
 		call cursor(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1, 0)
 		startinsert!
 		unlet l:todolevel
@@ -282,6 +287,11 @@ endfunction " }}}
 function! s:YankItem() abort
 	let l:currentLine = line('.')
 	let l:currentLineContent = getline(l:currentLine)
+	if getline(l:currentLine + 2) != '' && getline(l:currentLine + 1) == ''
+		call append(l:currentLine + 1, '')
+	endif
+	execute getline(l:currentLine + 1) != '' ? "call append(l:currentLine, '')" :
+				\ ""
 	if getline(l:currentLine + 1) != ''
 		call append(l:currentLine, '')
 	endif
