@@ -2,7 +2,8 @@
 " Author: SpringHan <springchohaku@qq.com>
 " Last Change: <+++>
 " Version: 1.0.0
-" Repository: https://github.com/SpringHan/NoToC.vim.git
+" Repository: https://github.com/SpringHan/NoToC.vim.git &&
+" https://gitee.com/springhan/NoToC.vim.git
 " Lisence: MIT
 
 " Autoload {{{
@@ -13,22 +14,19 @@ let g:NoToCLoaded = 1
 " runtime fold/ntc.vim " Load the fold script file
 autocmd BufNewFile,BufRead *.ntc setfiletype ntc
 autocmd BufNewFile,BufRead *.ntc NtcSyntaxReload
-" autocmd BufEnter *.ntc setlocal foldmethod=expr
-" autocmd BufNewFile,BufRead,BufWrite,TextChanged *.ntc
-			" \ setlocal foldexpr=NtcFoldRule(v:lnum)
-" autocmd BufEnter *.ntc nnoremap <silent><buffer> <Tab> :silent! normal za<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <CR> :NtcTodoControl<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-o> :NtcNewItem<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-y> :NtcYankItem<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-c> :NtcTypeChang<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-k> :NtcTitlePrev<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-j> :NtcTitleNext<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-S-k> :NtcLevelTitlePrev<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-S-j> :NtcLevelTitleNext<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-t>k :NtcTodoPrev<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-t>j :NtcTodoNext<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-S-t>k :NtcLevelTodoPrev<CR>
-autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-S-t>j :NtcLevelTodoNext<CR>
+if !exists('g:NoToCDefaultKeys') || g:NoToCDefaultKeys == 1
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <CR>     :NtcTodoControl<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-o>    :NtcNewItem<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-y>    :NtcYankItem<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-c>    :NtcTypeChange<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-k>    :NtcItemPrev<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-j>    :NtcItemNext<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <M-k>    :NtcLevelItemPrev<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <M-j>    :NtcLevelItemNext<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-UP>   :NtcItemMoveUp<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-DOWN> :NtcItemMoveDown<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-r>    :NtcResetCont<CR>
+endif
 " }}}
 
 " Commands {{{
@@ -37,56 +35,43 @@ command! -nargs=0 NtcNewItem call s:ItemAct(0)
 command! -nargs=0 NtcTypeChange call s:ItemAct(1)
 command! -nargs=0 NtcYankItem call s:YankItem()
 command! -nargs=0 NtcSyntaxReload call s:LoadSyntax()
-command! -nargs=0 NtcTitlePrev call s:JumpNode(0, 'up')
-command! -nargs=0 NtcTitleNext call s:JumpNode(0, 'down')
-command! -nargs=0 NtcTodoPrev call s:JumpNode(2, 'up')
-command! -nargs=0 NtcTodoNext call s:JumpNode(2, 'down')
-command! -nargs=0 NtcLevelTitlePrev call s:JumpNode(1, 'up')
-command! -nargs=0 NtcLevelTitleNext call s:JumpNode(1, 'down')
-command! -nargs=0 NtcLevelTodoPrev call s:JumpNode(3, 'up')
-command! -nargs=0 NtcLevelTodoNext call s:JumpNode(3, 'down')
+command! -nargs=0 NtcItemPrev call s:JumpNode(0, 'up')
+command! -nargs=0 NtcItemNext call s:JumpNode(0, 'down')
+command! -nargs=0 NtcLevelItemPrev call s:JumpNode(1, 'up')
+command! -nargs=0 NtcLevelItemNext call s:JumpNode(1, 'down')
+command! -nargs=0 NtcItemMoveUp call s:ItemMove(0)
+command! -nargs=0 NtcItemMoveDown call s:ItemMove(1)
+command! -nargs=0 NtcResetCont call s:ResetCont()
 " }}}
 
-" FUNCTION: {{{ NtcFoldRule()
-" function! NtcFoldRule(lnum)
-	" if getline(a:lnum) =~ '\(^-\)\s'
-		" return 1
-	" elseif getline(a:lnum) =~ '\(^+-\)\s'
-		" return 2
-	" elseif getline(a:lnum) =~ '\(^++-\)\s'
-		" return 3
-	" elseif getline(a:lnum) =~ '\(^+++-\)\s'
-		" return 4
-	" elseif getline(a:lnum) =~ '\(^-\*\)\s'
-		" if getline(a:lnum - 1) =~ '^\n'
-			" return 1
-		" endif
-		" return 'a1'
-	" elseif getline(a:lnum) =~ '\(^--\*\)\s'
-		" if getline(a:lnum - 1) =~ '\(^-\*\)\s'
-			" return 'a1'
-		" elseif getline(a:lnum - 1) =~ '\(^--\*\)\s'
-			" return '='
-		" endif
-		" return 2
-	" elseif getline(a:lnum) =~ '^\t\(.*\)'
-		" return 'a1'
-	" else
-		" return 0
-	" endif
-" endfunction " }}}
+" FUNCTION: {{{ s:NodeType(cont)[ `cont` is the content that needs to check ]
+" { Return the content's type }
+function! s:NodeType(cont) abort
+	if a:cont =~ '\(^+*-\)\(\s.*\)' " Title
+		let l:type = 0
+	elseif a:cont =~ '\(^-*\*\)\(\s\[.\]\s.*\)' " Todo
+		let l:type = 1
+	elseif a:cont =~ '^\t.*' " Notes
+		let l:type = 2
+	else
+		let l:type = -1
+	endif
+	return l:type
+endfunction " }}}
 
 " FUNCTION: {{{ s:NodeLevel(cont, type)[ `cont` is the content that needs to
 " judge, `type` is the item's type ] { Return the item's level }
 function! s:NodeLevel(cont, type) abort
 	if a:type == 0 " Title
-		let l:match = matchstr(a:cont, '\(^.*-\)\(\s.*\)\@=')
+		let l:match = matchstr(a:cont, '\(^+*-\)\(\s.*\)\@=')
 		let l:level = l:match == '-' ? 1 : l:match == '+-' ? 2 : l:match == '++-'
 					\ ? 3 : l:match == '+++-' ? 4 : 4
 	elseif a:type == 1 " Todo
 		let l:match = matchstr(a:cont, '\(^-*\*\)\(\s\[.\].*\)\@=')
 		let l:level = l:match == '-*' ? 1 : l:match == '--*' ? 2 : 2
-		echom l:level
+	elseif a:type == 2 " Notes
+		let l:match = 'none'
+		let l:level = 1
 	endif
 	unlet l:match
 	return l:level
@@ -101,16 +86,22 @@ function! s:LevelCont(level, type, cont) abort
 			let l:content = a:level == 1 ? '-' : a:level == 2 ? '+-' : a:level == 3 ?
 						\ '++-' : a:level == 4 ? '+++-' : ''
 		elseif a:cont == 1 " Pattern
-			let l:content = a:level == 1 ? '\(^-\)\(\s.*\)' : a:level == 2 ?
-						\ '\(^+-\)\(\s.*\)' : a:level == 3 ? '\(^++-\)\(\s.*\)' :
-						\ a:level == 4 ? '\(^+++-\)\(\s.*\)' : ''
+			let l:content = a:level == 1 ? '\(^-\)\(\s.*\)\@=' : a:level == 2 ?
+						\ '\(^+-\)\(\s.*\)\@=' : a:level == 3 ? '\(^++-\)\(\s.*\)\@=' :
+						\ a:level == 4 ? '\(^+++-\)\(\s.*\)\@=' : ''
 		endif
 	elseif a:type == 1 " Todo
 		if a:cont == 0 " Normal
 			let l:content = a:level == 1 ? '-*' : a:level == 2 ? '--*' : ''
 		elseif a:cont == 1 " Pattern
-			let l:content = a:level == 1 ? '\(^-\*\)\(\s\[.\]\s.*\)' : a:level == 2 ?
-						\ '\(^--\*\)\(\s\[.\]\s.*\)' : ''
+			let l:content = a:level == 1 ? '\(^-\*\)\(\s\[.\]\s.*\)\@=' : a:level == 2 ?
+						\ '\(^--\*\)\(\s\[.\]\s.*\)\@=' : ''
+		endif
+	elseif a:type == 2 " Notes
+		if a:cont == 0 " Normal
+			let l:content = '	'
+		elseif a:cont == 1 " Pattern
+			let l:content = '\(^\t.*\)'
 		endif
 	endif
 	return l:content
@@ -171,7 +162,7 @@ function! s:TodoNodes(lastNodeLine, foldType) abort
 	unlet l:lastNode l:i l:todoContent
 endfunction " }}}
 
-" FUNCTION: {{{ s:TodoControl()
+" FUNCTION: {{{ s:TodoControl() { Done or undone the todo }
 function! s:TodoControl() abort
 	execute &filetype != 'ntc' ? "return" : ""
 	let l:todoType = matchstr(getline(line('.')), '\(^-\{1,2\}\*\)') == '-*' ? 1 :
@@ -204,7 +195,7 @@ function! s:SearchItem(type, lineNum) abort
 	if a:type == 0 " Title
 		for l:line in reverse(range(1, a:lineNum))
 			let l:lineCont = getline(l:line)
-			if l:lineCont =~ '\(^.*-\)\s\(.*\)'
+			if l:lineCont =~ '\(^+*-\)\s\(.*\)'
 				let l:prevLevel = l:lineCont
 				break
 			elseif l:lineCont == ''
@@ -300,9 +291,9 @@ function! s:YankItem() abort
 					\ '\(^-*\*\)\(\s\[.\]\s.*\)\@=').' [ ] ')
 		call cursor(l:currentLine + 1, 0)
 		startinsert!
-	elseif l:currentLineContent =~ '\(^.*-\s\)'
+	elseif l:currentLineContent =~ '\(^+*-\s\)'
 		call setline(l:currentLine + 1, matchstr(l:currentLineContent,
-					\ '\(^.*-\)\(\s.*\)\@=').' ')
+					\ '\(^+*-\)\(\s.*\)\@=').' ')
 		call cursor(l:currentLine + 1, 0)
 		startinsert!
 	elseif l:currentLineContent =~ '\t\(.*\)'
@@ -332,7 +323,7 @@ function! s:ItemAct(type) abort
 		let l:itemNewType = input('Input the item new type:')
 		execute l:itemNewType == 'x' || l:itemNewType == '' ? "return" : ""
 		let l:content = matchstr(l:currentLineContent, l:currentLineContent =~
-					\ '\(^.*-\)\s\(.*\)' ? '\(^.*-\s\)\@<=\(.*\)' :
+					\ '\(^+*-\)\s\(.*\)' ? '\(^+*-\s\)\@<=\(.*\)' :
 					\ l:currentLineContent =~ '^-*\*\s\[.\]\s.*' ?
 					\ '\(^-*\*\s\[.\]\s\)\@<=\(.*\)' : l:currentLineContent =~ '^\t.*' ?
 					\ '\(^\t\)\@<=\(.*\)' : '\(.*\)')
@@ -350,12 +341,14 @@ endfunction " }}}
 " jump direction ] { Jump to the item nodes }
 function! s:JumpNode(type, direct) abort
 	let l:lines = line('.')
-	if a:type == 0 " Jump to the title that has the same level
-		let l:currentLevel = s:NodeLevel(getline(l:lines), 0)
+	let l:linesCont = getline(l:lines)
+	let l:linesType = s:NodeType(l:linesCont)
+	let l:currentLevel = s:NodeLevel(getline(l:lines), l:linesType)
+	if a:type == 0 " Jump to the item that has the same level
 		for l:line in a:direct == 'up' ? reverse(range(1, l:lines - 1)) :
 					\ range(l:lines + 1, line('$')) " previous & next
 			let l:lineCont = getline(l:line)
-			if l:lineCont =~ s:LevelCont(l:currentLevel, 0, 1)
+			if l:lineCont =~ s:LevelCont(l:currentLevel, l:linesType, 1)
 				let l:gotoLine = l:line | break
 			endif
 		endfor
@@ -363,27 +356,47 @@ function! s:JumpNode(type, direct) abort
 		for l:line in a:direct == 'up' ? reverse(range(1, l:lines - 1)) :
 					\ range(l:lines + 1, line('$')) " previous & next
 			let l:lineCont = getline(l:line)
-			if l:lineCont =~ s:LevelCont(1, 0, 1)
-				let l:gotoLine = l:line | break
-			endif
-		endfor
-	elseif a:type == 2 " Jump to the todo that has the same level
-		let l:currentLevel = s:NodeLevel(getline(l:lines), 1)
-		for l:line in a:direct == 'up' ? reverse(range(1, l:lines - 1)) :
-					\ range(l:lines + 1, line('$')) " previous & next
-			let l:lineCont = getline(l:line)
-			if l:lineCont =~ s:LevelCont(l:currentLevel, 1, 1)
-				let l:gotoLine = l:line | break
-			endif
-		endfor
-	elseif a:type == 3 " Jump to the level of todo
-		for l:line in a:direct == 'up' ? reverse(range(1, l:lines - 1)) :
-					\ range(l:lines + 1, line('$')) " previous & next
-			let l:lineCont = getline(l:line)
-			if l:lineCont =~ s:LevelCont(1, 1, 1)
+			if l:lineCont =~ s:LevelCont(1, l:linesType, 1)
 				let l:gotoLine = l:line | break
 			endif
 		endfor
 	endif
+	unlet l:lines l:linesType l:linesCont
 	execute exists('l:gotoLine') ? "call cursor(l:gotoLine, 0)" : ""
+endfunction " }}}
+
+" FUNCTION: {{{ s:ItemMove(direct)[ `direct` is the move direction ] { move
+" the item by the direction }
+function! s:ItemMove(direct) abort
+	let l:currentLine = line('.')
+	let l:currentCont = getline(l:currentLine)
+	if a:direct == 0 " Up
+		let l:prevCont = getline(l:currentLine - 1)
+		call setline(l:currentLine, l:prevCont)
+		call setline(l:currentLine - 1, l:currentCont)
+		call cursor(l:currentLine - 1, 0)
+		unlet l:prevCont
+	elseif a:direct == 1 " Down
+		let l:nextCont = getline(l:currentLine + 1)
+		call setline(l:currentLine, l:nextCont)
+		call setline(l:currentLine + 1, l:currentCont)
+		call cursor(l:currentLine + 1, 0)
+		unlet l:nextCont
+	endif
+	execute "write"
+	unlet l:currentLine l:currentCont
+endfunction " }}}
+
+" FUNCTION: {{{ s:ResetCont() { Reset the item's content }
+function! s:ResetCont() abort
+	let l:line = line('.')
+	let l:cont = getline(l:line)
+	let l:itemType = s:NodeType(l:cont)
+	let l:itemLevel = s:NodeLevel(l:cont, l:itemType)
+	let l:itemLeader = s:LevelCont(l:itemLevel, l:itemType, 0)
+	call setline(l:line, l:itemType == 0 ? l:itemLeader.' ' : l:itemType == 1 ?
+				\ l:itemLeader.' [ ] ' : l:itemType == 2 ? l:itemLeader : '')
+	call cursor(l:line, 0)
+	startinsert!
+	unlet l:line l:cont l:itemType l:itemLevel l:itemLeader
 endfunction " }}}
