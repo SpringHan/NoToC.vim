@@ -401,10 +401,7 @@ function! s:ResetCont() abort
 	unlet l:line l:cont l:itemType l:itemLevel l:itemLeader
 endfunction " }}}
 
-" FUNCTION: {{{ s:TimeMatch(content) [ `content` is the content of the todo
-" which needs to match ] { return the time-refresh or time-defined todo's info }
-function! s:TimeMatch(content) abort
-endfunction " }}}
+" =============== Todo time control start ===============
 
 " FUNCTION: {{{ s:InitialCache(file)[ `file` is the filename of the cache file need
 " to check ] { Initialize the cache }
@@ -416,6 +413,34 @@ function! s:InitialCache(file) abort
 			call system('mkdir '.g:NoToCCache)
 		endif
 		return empty(glob(g:NoToCCache)) ? -1 : 1
+	else
+		return empty(glob(g:NoToCCache.a:file)) ? -1 : 1
+	endif
+endfunction " }}}
+
+" FUNCTION: {{{ s:TimeMatch(content)[ `content` is the content of the todo
+" which needs to match, `type` is the type of the time need to get ] { return
+" the time-refresh or time-defined todo's info }
+function! s:TimeMatch(content, type) abort
+	let l:checkFile = a:type == 0 ? 'refreshTime.txt' : a:type == 1 ?
+				\ 'definedTime.txt' : ''
+	let l:fileTest = s:InitialCache(l:checkFile)
+	execute l:fileTest == -1 ? "echohl Error | echom 'The cache file does not".
+				\ " exists!' | echohl None | return" : ""
+	unlet l:fileTest
+	if a:type == 0 " time-refresh
+		let l:lineNum = 0
+		let l:contents = readfile(l:checkFile)
+		let l:matches = []
+		for l:line in l:contents
+			let l:lineNum += 1
+			if l:line == '&&'.a:content
+				call add(l:matches, l:contents[l:lineNum - 3])
+				call add(l:matches, l:contents[l:lineNum - 2])
+				break
+			endif
+		endfor
+		unlet l:lineNum l:line
 	endif
 endfunction " }}}
 
@@ -435,7 +460,9 @@ function! s:RefreshTodo(type, debug) abort
 		" Add the time check
 		let l:refreshTime = str2nr(input('Enter the refresh interval of time:'))
 		call writefile([ '@@'.expand("%:p"), '--'.l:refreshTime,
-					\ '^^'.strftime('%d'), '&&'.l:currentCont ], g:NoToCCache.'refreshtime.txt', 'a')
+					\ '^^'.strftime('%d'), '&&'.l:currentCont ], g:NoToCCache.
+					\ 'refreshtime.txt', 'a')
+		unlet l:refreshTime
 	elseif a:type == 1 " Get refresh time
 	endif
 endfunction " }}}
