@@ -11,6 +11,7 @@ if exists('g:NoToCLoaded')
 	finish
 endif
 let g:NoToCLoaded = 1
+
 " runtime fold/ntc.vim " Load the fold script file
 autocmd BufNewFile,BufRead *.ntc setfiletype ntc
 autocmd BufNewFile,BufRead *.ntc NtcSyntaxReload
@@ -98,6 +99,7 @@ function! s:LevelCont(level, type, cont) abort
 	elseif a:type == 2 && a:cont == 1 " Notes, type: Pattern
 		let l:content = '\(^\t.*\)'
 	endif
+
 	return l:content
 endfunction " }}}
 
@@ -137,7 +139,8 @@ function! s:LoadSyntax() abort
 	highlight link NoToCTitleFourContent Normal
 endfunction " }}}
 
-" FUNCTION: {{{ s:TodoNodes(lastNodeLine, foldType)
+" FUNCTION: {{{ s:TodoNodes(lastNodeLine, foldType)[ `lastNodeLine` is the
+" last todo's line number, `foldType` is the fold type ] { Add the todo item }
 function! s:TodoNodes(lastNodeLine, foldType) abort
 	let l:lastNode = a:lastNodeLine
 	let l:i = 1
@@ -149,7 +152,7 @@ function! s:TodoNodes(lastNodeLine, foldType) abort
 			execute a:foldType == 0 ?
 						\ "call setline(l:lastNode + 1, '--* [x] '.l:todoContent)" :
 						\ "call setline(l:lastNode + 1, '--* [ ] '.l:todoContent)"
-		else
+		elseif getline(l:lastNode + 1) !~ '\(^\t.*\)'
 			let l:i = 0
 		endif
 		let l:lastNode += 1
@@ -161,59 +164,43 @@ endfunction " }}}
 " FUNCTION: {{{ s:TodoControl() { Done or undone the todo }
 function! s:TodoControl() abort
 	execute &filetype != 'ntc' ? "return" : ""
-	let l:todoType = matchstr(getline(line('.')), '\(^-\{1,2\}\*\)') == '-*' ? 1 :
-				\ 2
+	let l:todoLevel = s:NodeLevel(getline(line('.')), 1)
 	let l:todoContent = matchstr(getline(line('.')), '\(^-\{1,2\}\*\s\[.\]\s\)\@<=\(.*\)')
 	let l:matchResult = matchstr(getline(line('.')), '\(^-\{1,2\}\*\s\)\@<=\(\[.\]\)')
 
-	if l:matchResult == '[ ]' && l:todoType == 1
-			call setline(line('.'), '-* [x] '.l:todoContent)
-			call s:TodoNodes(line('.'), 0)
-	elseif l:matchResult == '[ ]' && l:todoType != 1
-			call setline(line('.'), '--* [x] '.l:todoContent)
-	elseif l:matchResult == '[x]' && l:todoType == 1
-			call setline(line('.'), '-* [ ] '.l:todoContent)
-			call s:TodoNodes(line('.'), 1)
-	elseif l:matchResult == '[x]' && l:todoType != 1
-			call setline(line('.'), '--* [ ] '.l:todoContent)
+	if l:todoLevel == 1 " One level
+		call setline(line('.'),
+					\ l:matchResult == '[ ]' ? '-* [x] '.l:todoContent :
+					\ l:matchResult == '[x]' ? '-* [ ] '.l:todoContent : '')
+		call s:TodoNodes(line('.'),
+					\ l:matchResult == '[ ]' ? 0 : 1)
+	elseif l:todoLevel == 2 " Two Level
+			call setline(line('.'), l:matchResult == '[ ]' ?
+						\ '--* [x] '.l:todoContent : l:matchResult == '[x]' ? '--* [ ] '
+						\ .l:todoContent : '')
 	endif
 
 	execute "write"
-	unlet l:todoType l:todoContent l:matchResult
+	unlet l:todoLevel l:todoContent l:matchResult
 endfunction " }}}
 
 " FUNCTION: {{{ s:SearchItem(type, lineNum)[ `type` is the item's type,
 " `lineNum` is the number of the current line ] { Search the parent item and
 " return the node item level }
 function! s:SearchItem(type, lineNum) abort
-	if a:type == 0 " Title
-		for l:line in reverse(range(1, a:lineNum))
-			let l:lineCont = getline(l:line)
-			if l:lineCont =~ '\(^+*-\)\s\(.*\)'
-				let l:prevLevel = l:lineCont
-				break
-			elseif l:lineCont == ''
-				let l:prevLevel = 'none'
-				break
-			endif
-		endfor
-		echom l:prevLevel
-		unlet l:line l:lineCont
-		return l:prevLevel == 'none' ? 1 : s:NodeLevel(l:prevLevel, 0) + 1
-	elseif a:type == 1 " Todo
-		for l:line in reverse(range(1, a:lineNum))
-			let l:lineCont = getline(l:line)
-			if l:lineCont =~ '^-*\*\s\[.\]\s.*'
-				let l:prevLevel = l:lineCont
-				break
-			elseif l:lineCont == ''
-				let l:prevLevel = 'none'
-				break
-			endif
-		endfor
-		unlet l:line l:lineCont
-		return l:prevLevel == 'none' ? 1 : s:NodeLevel(l:prevLevel, 1) + 1
-	endif
+	execute a:type != 0 && a:type != 1 ? "return" : ""
+	for l:line in reverse(range(1, a:lineNum))
+		let l:lineCont = getline(l:line)
+		let l:matchstr = a:type == 0 ? '\(^+*-\)\s\(.*\)' : '^-*\*\s\[.\]\s.*'
+		if l:lineCont =~ l:matchstr
+			let l:prevLevel = l:lineCont | break
+		elseif l:lineCont == ''
+			let l:prevLevel = 'none' | break
+		endif
+	endfor
+	unlet l:line l:lineCont l:matchstr
+	return l:prevLevel == 'none' ? 1 : a:type == 0 ?
+				\ s:NodeLevel(l:prevLevel, 0) + 1 : s:NodeLevel(l:prevLevel, 1) + 1
 endfunction " }}}
 
 " FUNCTION: {{{ s:JudgeCont(type, lineCont)[ `type` is the new item's type,
@@ -227,6 +214,7 @@ function! s:JudgeCont(type, line, lineCont) abort
 
 	execute getline(a:line + 1) != '' ? "call append(a:line, '')" : ""
 
+	" Judge the content's type and add new item
 	if a:type == 1 || a:type == 0
 		call setline(a:line == 1 && a:lineCont == '' ? a:line : a:line + 1,
 					\ a:type == 0 ? '-* [ ] ' : '--* [ ] ')
@@ -274,17 +262,17 @@ function! s:YankItem() abort
 	let l:currentLine = line('.')
 	let l:currentLineContent = getline(l:currentLine)
 
+	" Append a newline when the next line is empty and the next line of next
+	" line is not empty
 	if getline(l:currentLine + 2) != '' && getline(l:currentLine + 1) == ''
 		call append(l:currentLine + 1, '')
 	endif
 
+	" Append a newline when the next line is not empty
 	execute getline(l:currentLine + 1) != '' ? "call append(l:currentLine, '')" :
 				\ ""
 
-	if getline(l:currentLine + 1) != ''
-		call append(l:currentLine, '')
-	endif
-
+	" Determine types then add the item
 	if l:currentLineContent =~ '\(^-*\*\s\[.\]\s\)'
 		call setline(l:currentLine + 1, matchstr(l:currentLineContent,
 					\ '\(^-*\*\)\(\s\[.\]\s.*\)\@=').' [ ] ')
@@ -310,19 +298,21 @@ function! s:ItemAct(type) abort
 	let l:currentLine = line('.')
 	let l:currentLineContent = getline(l:currentLine)
 
-	if a:type == 0
-		let l:newItem = input('Input the new item type:')
-		execute l:newItem == 'x' || l:newItem == '' ? "return" : ""
+	" Exit the function when the `type` is not right
+	execute a:type != 0 && a:type != 1 ? "return" : ""
+	let l:newItem = input(a:type == 0 ? 'Input the new item type:' :
+				\ 'Input the item new type:')
+	" Exit when the type that input is empty or 'x'
+	execute l:newItem == 'x' || l:newItem == '' ? "return" : ""
+
+	if a:type == 0 " Add new item
 		call s:JudgeCont(l:newItem == 't1' ? 0 : l:newItem == 't2' ? 1 :
 					\ l:newItem == 'n' ? 2 : l:newItem == 'o' ? 3 :
 					\ l:newItem == 'c' ? 4 : l:newItem == 'n1' ? 5 : l:newItem == 'n2'
 					\ ? 6 : l:newItem == 'n3' ? 7 : l:newItem == 'n4' ? 8 :
 					\ l:newItem == 't' ? 9 : -1,
 					\ l:currentLine, l:currentLineContent)
-		unlet l:currentLine l:currentLineContent l:newItem
-	elseif a:type == 1
-		let l:itemNewType = input('Input the item new type:')
-		execute l:itemNewType == 'x' || l:itemNewType == '' ? "return" : ""
+	else " Change the item's type
 		let l:content = matchstr(l:currentLineContent, l:currentLineContent =~
 					\ '\(^+*-\)\s\(.*\)' ? '\(^+*-\s\)\@<=\(.*\)' :
 					\ l:currentLineContent =~ '^-*\*\s\[.\]\s.*' ?
@@ -334,39 +324,37 @@ function! s:ItemAct(type) abort
 					\ '++- ' : l:itemNewType == 'n4' ? '+++- ' : l:itemNewType == 'c' ?
 					\ '	' : ''
 		call setline(l:currentLine, l:newType.l:content)
-		unlet l:currentLine l:currentLineContent l:itemNewType l:content l:newType
 	endif
+	execute a:type == 0 ? "unlet l:currentLine l:currentLineContent l:newItem"
+				\ : "unlet l:currentLine l:currentLineContent l:itemNewType ".
+				\ "l:content l:newType"
 
 endfunction " }}}
 
 " FUNCTION: {{{ s:JumpNode(type)[ `type` is the jump type, `direct` is the
 " jump direction ] { Jump to the item nodes }
 function! s:JumpNode(type, direct) abort
+	execute a:type != 0 && a:type != 1 ? "return" : ""
 	let l:lines = line('.')
 	let l:linesCont = getline(l:lines)
 	let l:linesType = s:NodeType(l:linesCont)
 	let l:currentLevel = s:NodeLevel(getline(l:lines), l:linesType)
 
-	if a:type == 0 " Jump to the item that has the same level
-		for l:line in a:direct == 'up' ? reverse(range(1, l:lines - 1)) :
-					\ range(l:lines + 1, line('$')) " previous & next
-			let l:lineCont = getline(l:line)
-			if l:lineCont =~ s:LevelCont(l:currentLevel, l:linesType, 1)
-				let l:gotoLine = l:line | break
-			endif
-		endfor
-	elseif a:type == 1 " Jump to the level of title
-		for l:line in a:direct == 'up' ? reverse(range(1, l:lines - 1)) :
-					\ range(l:lines + 1, line('$')) " previous & next
-			let l:lineCont = getline(l:line)
-			if l:lineCont =~ s:LevelCont(1, l:linesType, 1)
-				let l:gotoLine = l:line | break
-			endif
-		endfor
-	endif
+	" Traverse the content in each rows and determine whether meet the requirements
+	for l:line in a:direct == 'up' ? reverse(range(1, l:lines - 1)) :
+				\ range(l:lines + 1, line('$')) " previous & next
+		let l:lineCont = getline(l:line)
+		let l:matchstr = a:type == 0 ? s:LevelCont(l:currentLevel,
+					\ l:linesType, 1) : s:LevelCont(1, l:linesType, 1)
+		if l:lineCont =~ l:matchstr
+			let l:gotoLine = l:line | break
+		endif
+	endfor
 
 	unlet l:lines l:linesType l:linesCont
-	execute exists('l:gotoLine') ? "call cursor(l:gotoLine, 0)" : ""
+	execute exists('l:matchstr') ? "unlet l:matchstr" : ""
+	execute exists('l:gotoLine') ? "call cursor(l:gotoLine, 0) | ".
+				\ "unlet l:gotoLine" : ""
 endfunction " }}}
 
 " FUNCTION: {{{ s:ItemMove(direct)[ `direct` is the move direction ] { move
@@ -428,6 +416,7 @@ endfunction " }}}
 " which needs to match, `type` is the type of the time need to get ] { return
 " the time-refresh or time-defined todo's info }
 function! s:TimeMatch(content, type) abort
+	execute a:type != 0 && a:type != 1 ? "return" : ""
 	let l:checkFile = a:type == 0 ? 'refreshTime.txt' : a:type == 1 ?
 				\ 'definedTime.txt' : ''
 	let l:fileTest = s:InitialCache(l:checkFile)
@@ -451,14 +440,16 @@ function! s:TimeMatch(content, type) abort
 
 	execute empty(l:matches) ? "return" : l:matches[0] == '' ? "return" :
 				\ a:type == 0 && l:matches[1] == '' ? "return" : ""
+	" If the time equal to the refresh time, end the function
+	execute a:type == 0 && l:matches[1] == strftime('%d') ? "return" : ""
 
-	if a:type == 0 " time-refresh
-		if l:matches[1] != strftime('%d') && l:matches[1] + l:matches[0] == strftime('%d')
-			" Todo: Call the tips function
-			let l:contents[l:lineNum + 2] = strftime('%d')
-			call writefile(l:contents, l:checkFile)
-		endif
-	elseif a:type == 1 " time-defined
+	" If now the time is the refresh time, update the last refresh time and
+	" undone todo
+	if a:type == 0 && l:matches[1] + l:matches[0] == strftime('%d') " time-refresh
+		" Todo: Call the undone todo function
+		let l:contents[l:lineNum + 2] = strftime('%d')
+		call writefile(l:contents, l:checkFile)
+	else " time-defined
 	endif
 	unlet l:lineNum l:line
 endfunction " }}}
