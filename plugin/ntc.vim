@@ -43,6 +43,7 @@ command! -nargs=0 NtcLevelItemNext call s:JumpNode(1, 'down')
 command! -nargs=0 NtcItemMoveUp call s:ItemMove(0)
 command! -nargs=0 NtcItemMoveDown call s:ItemMove(1)
 command! -nargs=0 NtcResetCont call s:ResetCont()
+" command! -nargs=0 NtcTest call s:InitialCache('')
 " }}}
 
 " FUNCTION: {{{ s:NodeType(cont)[ `cont` is the content that needs to check ]
@@ -142,6 +143,7 @@ endfunction " }}}
 " FUNCTION: {{{ s:TodoNodes(lastNodeLine, foldType)[ `lastNodeLine` is the
 " last todo's line number, `foldType` is the fold type ] { Add the todo item }
 function! s:TodoNodes(lastNodeLine, foldType) abort
+	execute line('.') == line('$') ? "return" : ""
 	let l:lastNode = a:lastNodeLine
 	let l:i = 1
 
@@ -419,10 +421,14 @@ function! s:TimeMatch(content, type) abort
 	execute a:type != 0 && a:type != 1 ? "return" : ""
 	let l:checkFile = a:type == 0 ? 'refreshTime.txt' : a:type == 1 ?
 				\ 'definedTime.txt' : ''
+
+	execute s:InitialCache('') ? "echohl Error | echom '[NoToC.vim]The cache ".
+				\ "file does not exists!' | echohl None | return" : ""
 	let l:fileTest = s:InitialCache(l:checkFile)
-	execute l:fileTest == -1 ? "echohl Error | echom 'The cache file does not".
-				\ " exists!' | echohl None | return" : ""
+	execute l:fileTest == -1 ? "echom '[NoToC.vim]: This todo have not set the ".
+				\ "time options.' | return" : ""
 	unlet l:fileTest
+
 	let l:lineNum = -1
 	let l:contents = readfile(l:checkFile)
 	let l:matches = []
@@ -440,32 +446,32 @@ function! s:TimeMatch(content, type) abort
 
 	execute empty(l:matches) ? "return" : l:matches[0] == '' ? "return" :
 				\ a:type == 0 && l:matches[1] == '' ? "return" : ""
-	" If the time equal to the refresh time, end the function
-	execute a:type == 0 && l:matches[1] == strftime('%d') ? "return" : ""
 
-	" If now the time is the refresh time, update the last refresh time and
-	" undone todo
-	if a:type == 0 && l:matches[1] + l:matches[0] == strftime('%d') " time-refresh
-		" Todo: Call the undone todo function
-		let l:contents[l:lineNum + 2] = strftime('%d')
-		call writefile(l:contents, l:checkFile)
-	else " time-defined
-	endif
+	call add(l:matches, l:lineNum)
 	unlet l:lineNum l:line
+	return l:matches
 endfunction " }}}
 
 function! s:CheckTime() abort
 endfunction
 
-" FUNCTION: {{{ s:RefreshTodo(type)[ `type` is the operation of the refresh
-" action ] { Refresh the todo by the time }
-function! s:RefreshTodo(type, debug) abort
+" FUNCTION: {{{ s:FloatReminds(content)[ `content` is the content need to
+" remind ] { Remind by float window }
+function! s:FloatReminds(content) abort
+endfunction " }}}
+
+" FUNCTION: {{{ s:RefreshTodo(type)[ `type` is the operation of the add or get
+" action, the `opera` is the refresh operation ] { Refresh the todo by the
+" time }
+function! s:RefreshTodo(type, opera) abort
+	execute a:type != 0 && a:type != 1 ? "return" : ""
 	let l:initialTest = s:InitialCache('')
 	execute l:initialTest == 0 || l:initialTest == -1 ?
 				\ "echohl Error | echom 'The g:NoToCCache is error.' | echohl None".
 				\ " | return" : ""
 	unlet l:initialTest
 	let l:currentCont = getline(line('.'))
+
 	if a:type == 0 " Add refresh time
 		" Add the time check
 		let l:refreshTime = str2nr(input('Enter the refresh interval of time:'))
@@ -473,6 +479,17 @@ function! s:RefreshTodo(type, debug) abort
 					\ '^^'.strftime('%d'), '&&'.l:currentCont ], g:NoToCCache.
 					\ 'refreshtime.txt', 'a')
 		unlet l:refreshTime
-	elseif a:type == 1 " Get refresh time
+	else " Get refresh time and do the judgment
+		execute a:opera != 'output' && a:opera != 'update' ? "return" : ""
+		let l:result = s:TimeMatch(l:currentCont, 0)
+
+		" Judge the operation and do it
+		if a:opera == 'output' " Output the info
+			execute !exists('g:NoToCTips') || g:NoToCTips == 'command' ?
+						\ "echom \"Todo's refresh interval: \".l:result[0]" :
+						\ g:NoToCTips == 'float' ? "call s:FloatReminds()" : ""
+		endif
+
 	endif
+
 endfunction " }}}

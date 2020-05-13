@@ -7,8 +7,8 @@
 --* [x] 通过命令(默认快捷键: Ctrl-y)新建与上一行相同的item
 --* [x] 通过命令(默认快捷键: Ctrl-UP 和 Ctrl-DOWN)将当前行上下移动
 --* [x] Title和Todo的跳转:
-	同级Item跳转 Ctrl-k   Ctrl-j
-	一级Item跳转 Meta-k   Meta-j
+	同级Item跳转 Ctrl-k (Up)   Ctrl-j (Down)
+	一级Item跳转 Meta-k (Up)   Meta-j (Down)
 --* [x] 通过命令(默认快捷键: Ctrl-c)更换当前item type
 --* [x] 更智能的判断内容创建item
 --* [x] 通过命令(默认快捷键: Ctrl-r)重新设置item内容
@@ -19,5 +19,4 @@
 --* [ ] 折叠功能(加入fold文件夹自定义折叠功能)
 +- Variables
 ++- g:NoToCDefaultKeys - 使用默认的快捷键(1 for yes, 0 for no)
-++- g:NoToCRemindType - Todo时限范围的提醒类型('float' for 浮动窗口[仅支持NeoVim], 'commmand' for 命令下提示)
-++- g:NoToCTips - Todo的信息提示(值同上)
+++- g:NoToCTips - Todo关于时间功能的提醒类型('float' for 浮动窗口[仅支持NeoVim], 'commmand' for 命令下提示)
