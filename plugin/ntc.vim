@@ -27,6 +27,7 @@ if !exists('g:NoToCDefaultKeys') || g:NoToCDefaultKeys == 1
 	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-UP>   :NtcItemMoveUp<CR>
 	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-DOWN> :NtcItemMoveDown<CR>
 	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-r>    :NtcResetCont<CR>
+	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-d>    :NtcCleanTodo<CR>
 endif
 " }}}
 
@@ -43,6 +44,7 @@ command! -nargs=0 NtcLevelItemNext call s:JumpNode(1, 'down')
 command! -nargs=0 NtcItemMoveUp call s:ItemMove(0)
 command! -nargs=0 NtcItemMoveDown call s:ItemMove(1)
 command! -nargs=0 NtcResetCont call s:ResetCont()
+command! -nargs=0 NtcCleanTodo call s:CleanTodos()
 " command! -nargs=0 NtcTest call s:InitialCache('')
 " }}}
 
@@ -395,6 +397,26 @@ function! s:ResetCont() abort
 	call cursor(l:line, 0)
 	startinsert!
 	unlet l:line l:cont l:itemType l:itemLevel l:itemLeader
+endfunction " }}}
+
+" FUNCTION: {{{ s:CleanTodos() { Clean all the todos that were done }
+function! s:CleanTodos() abort
+	" let l:line = 0
+	let l:fileCont = readfile(expand('%:p'))
+	let l:copy = l:fileCont
+
+	for l:line in l:copy
+		execute l:line =~ '\(^-*\*\s\[x\]\s.*\)' ?
+					\ "call remove(l:fileCont, index(l:fileCont, l:line))" : ""
+	endfor
+
+	execute "1delete".line('$')
+	for l:line in l:fileCont
+		call setline(index(l:fileCont, l:line) + 1, l:line)
+	endfor
+
+	unlet l:fileCont l:copy l:line
+	execute "write"
 endfunction " }}}
 
 " =============== Todo time control start ===============
