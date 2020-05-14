@@ -162,7 +162,8 @@ function! s:TodoNodes(lastNodeLine, foldType) abort
 		let l:lastNode += 1
 	endwhile
 
-	unlet l:lastNode l:i l:todoContent
+	execute exists('l:todoContent') ? "unlet l:todoContent" : ""
+	unlet l:lastNode l:i
 endfunction " }}}
 
 " FUNCTION: {{{ s:TodoControl() { Done or undone the todo }
