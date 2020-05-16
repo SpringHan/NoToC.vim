@@ -36,7 +36,7 @@ command! -nargs=0 NtcTodoControl call s:TodoControl()
 command! -nargs=0 NtcNewItem call s:ItemAct(0)
 command! -nargs=0 NtcTypeChange call s:ItemAct(1)
 command! -nargs=0 NtcYankItem call s:YankItem()
-command! -nargs=0 NtcSyntaxReload call s:LoadSyntax()
+command! -nargs=0 NtcHighlightReload call s:LoadSyntax()
 command! -nargs=0 NtcItemPrev call s:JumpNode(0, 'up')
 command! -nargs=0 NtcItemNext call s:JumpNode(0, 'down')
 command! -nargs=0 NtcLevelItemPrev call s:JumpNode(1, 'up')
@@ -419,115 +419,4 @@ function! s:CleanTodos() abort
 
 	unlet l:fileCont l:copy l:line
 	execute "write"
-endfunction " }}}
-
-" =============== Todo time control start ===============
-
-" FUNCTION: {{{ s:InitialCache(file)[ `file` is the filename of the cache file need
-" to check ] { Initialize the cache }
-function! s:InitialCache(file) abort
-	execute !exists('g:NoToCCache') || type(g:NoToCCache) != 1 ?
-				\ "return" : ""
-	if a:file == ''
-		if empty(glob(g:NoToCCache))
-			call system('mkdir '.g:NoToCCache)
-		endif
-		return empty(glob(g:NoToCCache)) ? -1 : 1
-	else
-		return empty(glob(g:NoToCCache.a:file)) ? -1 : 1
-	endif
-endfunction " }}}
-
-" FUNCTION: {{{ s:TimeMatch(content)[ `content` is the content of the todo
-" which needs to match, `type` is the type of the time need to get ] { return
-" the time-refresh or time-defined todo's info }
-function! s:TimeMatch(content, type) abort
-	execute a:type != 0 && a:type != 1 ? "return" : ""
-	let l:checkFile = a:type == 0 ? 'refreshtime.txt' : a:type == 1 ?
-				\ 'definedTime.txt' : ''
-
-	execute s:InitialCache('') ? "echohl Error | echom '[NoToC.vim]The cache ".
-				\ "file does not exists!' | echohl None | return" : ""
-	let l:fileTest = s:InitialCache(l:checkFile)
-	execute l:fileTest == -1 ? "echom '[NoToC.vim]: This todo have not set the ".
-				\ "time options.' | return" : ""
-	unlet l:fileTest
-
-	let l:lineNum = -1
-	let l:contents = readfile(l:checkFile)
-	let l:matches = []
-
-	for l:line in l:contents
-		let l:lineNum += 1
-		if l:line == '@@'.expand('%:p') && l:contents[l:lineNum + 3] == '&&'.a:content
-			execute a:type == 0 ?
-						\ "call add(l:matches, matchstr(l:contents[l:lineNum + 1], ".
-						\ "'\(^\^\^\)\@<=\(.*\'))" : ""
-			call add(l:matches, matchstr(l:contents[l:lineNum + 2], '\(^--\)\@<=\(.*\)'))
-			break
-		endif
-	endfor
-
-	execute empty(l:matches) ? "return" : l:matches[0] == '' ? "return" :
-				\ a:type == 0 && l:matches[1] == '' ? "return" : ""
-
-	call add(l:matches, l:lineNum + 1)
-	unlet l:lineNum l:line
-	return l:matches
-endfunction " }}}
-
-function! s:CheckTime() abort
-endfunction
-
-" FUNCTION: {{{ s:FloatReminds(content)[ `content`(list) is the content need to
-" remind ] { Remind by float window }
-function! s:FloatReminds(content) abort
-	let s:FloatRemind = nvim_create_buf(v:false, v:true)
-	let l:opt = { 'relative': 'editor',
-				\ 'width': float2nr(round(0.6 * &columns)),
-				\ 'height': float2nr(round(0.6 * &lines)),
-				\ 'col': float2nr(round(0.2 * &columns)),
-				\ 'row': float2nr(round(0.2 * &lines)),
-				\ 'anchor': 'NW' }
-	let l:window = nvim_open_win(s:FloatRemind, v:true, l:opt)
-	call nvim_buf_set_lines(s:FloatRemind, 0, len(a:content), v:false, a:content)
-	call nvim_win_set_option(l:window, 'number', v:false)
-	call nvim_win_set_option(l:window, 'relativenumber', v:false)
-	call nvim_buf_set_option(s:FloatRemind, 'buftype', 'nofile')
-	call nvim_buf_set_keymap(s:FloatRemind, 'n', '<CR>',
-				\ ':bd '.s:FloatRemind.'<CR>', { 'silent': v:true, 'nowait': v:true })
-endfunction " }}}
-
-" FUNCTION: {{{ s:RefreshTodo(type)[ `type` is the operation of the add or get
-" action, the `opera` is the refresh operation ] { Refresh the todo by the
-" time }
-function! s:RefreshTodo(type, opera) abort
-	execute a:type != 0 && a:type != 1 ? "return" : ""
-	let l:initialTest = s:InitialCache('')
-	execute l:initialTest == 0 || l:initialTest == -1 ?
-				\ "echohl Error | echom 'The g:NoToCCache is error.' | echohl None".
-				\ " | return" : ""
-	unlet l:initialTest
-	let l:currentCont = getline(line('.'))
-
-	if a:type == 0 " Add refresh time
-		" Add the time check
-		let l:refreshTime = str2nr(input('Enter the refresh interval of time:'))
-		call writefile([ '@@'.expand("%:p"), '--'.l:refreshTime,
-					\ '^^'.strftime('%d'), '&&'.l:currentCont ], g:NoToCCache.
-					\ 'refreshtime.txt', 'a')
-		unlet l:refreshTime
-	else " Get refresh time and do the judgment
-		execute a:opera != 'output' && a:opera != 'update' ? "return" : ""
-		let l:result = s:TimeMatch(l:currentCont, 0)
-
-		" Judge the operation and do it
-		if a:opera == 'output' | echom "Todo's refresh interval: ".l:result[0]
-		else
-			let l:refreshFile = readfile(g:NoToCCache.'refreshtime.txt')
-			let l:refreshFile.l:result[3] = strftime('%d')
-		endif
-
-	endif
-
 endfunction " }}}

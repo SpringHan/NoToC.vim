@@ -1,0 +1,82 @@
+*notoc.vim*	A plugin can control the notes and todos in the (Neo)Vim
+
+Version: 1.0.0
+Author: SpringHan <springchohaku@qq.com>
+Lisence: MIT
+
+==============================================================================
+CONTENTS							*notoc-contents*
+
+DefaultKeys					|notoc-defaultkeys|
+Configuration					|notoc-configuration|
+Commands						|notoc-commands|
+
+==============================================================================
+DEFAULTKEYS						*notoc-defaultkeys*
+
+Note: These keybingdings are all in normal mode.
+
+<CR> - Done/Undone the todo under the cursor.(If the todo is One level, NoToC
+will done all the Level 2 todos belong to it.)
+Corresponding command: |:NtcTodoControl|
+
+<C-o> - Create a new item by entering the item type in the next line.
+
+*NtcTypes* :
+|n| - A title type, it is based on previous title level to judge the title's
+level.
+|n1| - Level 1 title.It will be: `- Content`
+|n2| - Level 2 title.It will be: `+- content`
+|n3| - Level 3 title.It will be: `++- content`
+|n4| - Level 4 title.It will be: `+++- content`
+|t| - A todo type, it is based on previous todo level to judge the todo's
+level.
+|t1| - Level 1 todo.It will be: `- [ ] todo`
+|t2| - Level 2 todo.It will be: `-- [ ] todo`
+Corresponding command: |:NtcNewItem|
+
+<C-y> - Create a new item that is same as the previous item.
+Corresponding command: |:NtcYankItem|
+
+<C-UP> - Move the current line to the previous line.
+Corresponding command: |:NtcItemMoveUp|
+
+<C-DOWN> - Move the current line to the next line.
+Corresponding command: |:NtcItemMoveDown|
+
+<C-k> - Jump to the previous item that has same type and level.
+Corresponding command: |:NtcItemPrev|
+
+<C-j> - Jump to the next item that has same type and level.
+Corresponding command: |:NtcItemNext|
+
+<M-k> - Jump to the previous level 1 item that has same type.
+Corresponding command: |:NtcLevelItemPrev|
+
+<M-j> - Jump to the next level 1 item that has same type.
+Corresponding command: |:NtcLevelItemNext|
+
+<C-c> - Change the current item's type.Item types see |NtcTypes|.
+Corresponding command: |:NtcTypeChange|
+
+<C-r> - Reset the current item's content.
+Corresponding command: |:NtcResetCont|
+
+<C-d> - Clean all done todos.
+Corresponding command: |:NtcCleanTodo|
+
+==============================================================================
+CONFIGURATION						*notoc-configuration*
+
+*g:NoToCDefaultKeys* - Using the default keybingdings.(Default: 1)
+It can be `0` or `1`.
+
+===========================================================================
+COMMANDS							*notoc-commands*
+
+*:NtcHighlightReload* - Reload the highlight.
+
+More commands see |notoc-defaultkeys|
+
+==============================================================================
+vim:tw=80:nosta:noet:sw=4:ts=9:sts=0:ft=help:fen:fdm=marker
