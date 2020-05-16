@@ -4,7 +4,7 @@
 " Version: 1.0.0
 " Repository: https://github.com/SpringHan/NoToC.vim.git &&
 " https://gitee.com/springhan/NoToC.vim.git
-" Lisence: MIT
+" License: MIT
 
 " Autoload {{{
 if exists('g:NoToCLoaded')
@@ -324,15 +324,15 @@ function! s:ItemAct(type) abort
 					\ l:currentLineContent =~ '^-*\*\s\[.\]\s.*' ?
 					\ '\(^-*\*\s\[.\]\s\)\@<=\(.*\)' : l:currentLineContent =~ '^\t.*' ?
 					\ '\(^\t\)\@<=\(.*\)' : '\(.*\)')
-		let l:newType = l:itemNewType == 't1' ? '-* [ ] ' :
-					\ l:itemNewType == 't2' ? '--* [ ] ' : l:itemNewType == 'n1' ?
-					\ '- ' : l:itemNewType == 'n2' ? '+- ' : l:itemNewType == 'n3' ?
-					\ '++- ' : l:itemNewType == 'n4' ? '+++- ' : l:itemNewType == 'c' ?
+		let l:newType = l:newItem == 't1' ? '-* [ ] ' :
+					\ l:newItem == 't2' ? '--* [ ] ' : l:newItem == 'n1' ?
+					\ '- ' : l:newItem == 'n2' ? '+- ' : l:newItem == 'n3' ?
+					\ '++- ' : l:newItem == 'n4' ? '+++- ' : l:newItem == 'c' ?
 					\ '	' : ''
 		call setline(l:currentLine, l:newType.l:content)
 	endif
 	execute a:type == 0 ? "unlet l:currentLine l:currentLineContent l:newItem"
-				\ : "unlet l:currentLine l:currentLineContent l:itemNewType ".
+				\ : "unlet l:currentLine l:currentLineContent l:newItem ".
 				\ "l:content l:newType"
 
 endfunction " }}}
