@@ -1,6 +1,6 @@
 " A plugin can control the notes and todos in (Neo)Vim.
 " Author: SpringHan <springchohaku@qq.com>
-" Last Change: <+++>
+" Last Change: 2020-5-16
 " Version: 1.0.0
 " Repository: https://github.com/SpringHan/NoToC.vim.git &&
 " https://gitee.com/springhan/NoToC.vim.git
@@ -14,7 +14,7 @@ let g:NoToCLoaded = 1
 
 " runtime fold/ntc.vim " Load the fold script file
 autocmd BufNewFile,BufRead *.ntc setfiletype ntc
-autocmd BufNewFile,BufRead *.ntc NtcSyntaxReload
+autocmd BufNewFile,BufRead *.ntc NtcHighlightReload
 if !exists('g:NoToCDefaultKeys') || g:NoToCDefaultKeys == 1
 	autocmd BufEnter *.ntc nnoremap <silent><buffer> <CR>     :NtcTodoControl<CR>
 	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-o>    :NtcNewItem<CR>
