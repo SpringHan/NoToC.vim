@@ -4,7 +4,7 @@
 " Version: 1.0.0
 " Repository: https://github.com/SpringHan/NoToC.vim.git &&
 " https://gitee.com/springhan/NoToC.vim.git
-" Lisence: MIT
+" License: MIT
 
 " Autoload {{{
 if exists('g:NoToCLoaded')
