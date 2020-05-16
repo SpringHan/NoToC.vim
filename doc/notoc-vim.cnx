@@ -1,0 +1,79 @@
+*notoc.vim*	一个可以在(Neo)vim中控制笔记和待办事项的插件
+
+版本号: 1.0.0
+作者: SpringHan <springchohaku@qq.com>
+许可: MIT
+
+==============================================================================
+内容							*notoc-contents*
+
+默认快捷键                       |notoc-defaultkeys|
+配置                            |notoc-configuration|
+命令                            |notoc-commands|
+
+==============================================================================
+默认快捷键						*notoc-defaultkeys*
+
+注意:这些快捷键都在normal模式下。
+
+<CR> - 完成/撤消光标下的待办事项。(如果todo是一级，NoToC
+将让所有的2级待办事项属于它。)
+相应的命令: |:NtcTodoControl|
+
+<C-o> - 通过在下一行中输入项目类型来创建一个新item。
+
+*NtcTypes* :
+|n| - 一个标题类型，它是根据之前的标题等级来判断标题的的水平。
+|n1| - 一级职称, 它将是:'- Content'
+|n2| - 二级职称, 它将是:'+- content'
+|n3| - 三级标题, 它将是:'++- content'
+|n4| - 四级标题, 它将是:'+++- content'
+|t| - 一种todo类型，它是基于之前前的todo水平来判断todo的的水平。
+|t1| - 一级待办事项, 它将是:'- [ ]todo'
+|t2| - 二级待办事项, 它将是:'—[ ]todo'
+相应的命令: |:NtcNewItem|
+
+<C-y> - 创建一个与前一个item相同的新item。
+相应的命令: |:NtcYankItem|
+
+<C-UP> - 将当前行移动到上一行。
+相应的命令: |:NtcItemMoveUp|
+
+<C-DOWN> - 将当前行移动到下一行。
+相应的命令: |:NtcItemMoveDown|
+
+<C-k> - 跳转到具有相同类型和级别的上一个item。
+相应的命令: |:NtcItemPrev|
+
+<C-j> - 跳转到具有相同类型和级别的下一个item。
+相应的命令: |:NtcItemNext|
+
+<M-k> - 跳转到具有相同类型的上一级item。
+相应的命令: |:NtcLevelItemPrev|
+
+<M-j> - 跳转到具有相同类型的下一级item。
+相应的命令: |:NtcLevelItemNext|
+
+<C-c> - 更改当前item的类型。项目类型见|NtcTypes|。
+相应的命令: |:NtcTypeChange|
+
+<C-r> - 重置当前item的内容。
+相应的命令: |:NtcResetCont|
+
+<C-d> - 清理所有已完成的待办事项。
+相应的命令: |:NtcCleanTodo|
+
+==============================================================================
+配置						*notoc-configuration*
+
+*g:NoToCDefaultKeys* - 使用默认的快捷键(默认值:1), 它可以是“0”或“1”。
+
+===========================================================================
+命令							*notoc-commands*
+
+*:NtcHighlightReload* - 重新加载高亮显示。
+
+更多命令见 |notoc-defaultkeys|
+
+==============================================================================
+vim:tw=80:nosta:noet:sw=4:ts=9:sts=0:ft=help:fen:fdm=marker
