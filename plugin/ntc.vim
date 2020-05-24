@@ -324,15 +324,15 @@ function! s:ItemAct(type) abort
 					\ l:currentLineContent =~ '^-*\*\s\[.\]\s.*' ?
 					\ '\(^-*\*\s\[.\]\s\)\@<=\(.*\)' : l:currentLineContent =~ '^\t.*' ?
 					\ '\(^\t\)\@<=\(.*\)' : '\(.*\)')
-		let l:newType = l:itemNewType == 't1' ? '-* [ ] ' :
-					\ l:itemNewType == 't2' ? '--* [ ] ' : l:itemNewType == 'n1' ?
-					\ '- ' : l:itemNewType == 'n2' ? '+- ' : l:itemNewType == 'n3' ?
-					\ '++- ' : l:itemNewType == 'n4' ? '+++- ' : l:itemNewType == 'c' ?
+		let l:newType = l:newItem == 't1' ? '-* [ ] ' :
+					\ l:newItem == 't2' ? '--* [ ] ' : l:newItem == 'n1' ?
+					\ '- ' : l:newItem == 'n2' ? '+- ' : l:newItem == 'n3' ?
+					\ '++- ' : l:newItem == 'n4' ? '+++- ' : l:newItem == 'c' ?
 					\ '	' : ''
 		call setline(l:currentLine, l:newType.l:content)
 	endif
 	execute a:type == 0 ? "unlet l:currentLine l:currentLineContent l:newItem"
-				\ : "unlet l:currentLine l:currentLineContent l:itemNewType ".
+				\ : "unlet l:currentLine l:currentLineContent l:newItem ".
 				\ "l:content l:newType"
 
 endfunction " }}}
@@ -522,12 +522,16 @@ function! s:RefreshTodo(type, opera) abort
 		let l:result = s:TimeMatch(l:currentCont, 0)
 
 		" Judge the operation and do it
-		if a:opera == 'output' | echom "Todo's refresh interval: ".l:result[0]
+		if a:opera == 'output'
+			echom "Todo's refresh interval: ".l:result[0]
 		else
 			let l:refreshFile = readfile(g:NoToCCache.'refreshtime.txt')
 			let l:refreshFile.l:result[3] = strftime('%d')
+			call writefile(l:refreshFile, g:NoToCCache.'/refreshtime.txt')
 		endif
+		unlet l:result l:refreshFile
 
 	endif
 
+	unlet l:initialTest l:currentCont
 endfunction " }}}
