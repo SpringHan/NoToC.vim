@@ -522,12 +522,16 @@ function! s:RefreshTodo(type, opera) abort
 		let l:result = s:TimeMatch(l:currentCont, 0)
 
 		" Judge the operation and do it
-		if a:opera == 'output' | echom "Todo's refresh interval: ".l:result[0]
+		if a:opera == 'output'
+			echom "Todo's refresh interval: ".l:result[0]
 		else
 			let l:refreshFile = readfile(g:NoToCCache.'refreshtime.txt')
 			let l:refreshFile.l:result[3] = strftime('%d')
+			call writefile(l:refreshFile, g:NoToCCache.'/refreshtime.txt')
 		endif
+		unlet l:result l:refreshFile
 
 	endif
 
+	unlet l:initialTest l:currentCont
 endfunction " }}}
