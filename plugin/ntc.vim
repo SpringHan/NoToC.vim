@@ -1,7 +1,7 @@
 " A plugin can control the notes and todos in (Neo)Vim.
 " Author: SpringHan <springchohaku@qq.com>
-" Last Change: 2020-5-16
-" Version: 1.0.0
+" Last Change: 2020-6-21
+" Version: 1.0.1
 " Repository: https://github.com/SpringHan/NoToC.vim.git &&
 " https://gitee.com/springhan/NoToC.vim.git
 " License: MIT
@@ -14,7 +14,7 @@ let g:NoToCLoaded = 1
 
 " runtime fold/ntc.vim " Load the fold script file
 autocmd BufNewFile,BufRead *.ntc setfiletype ntc
-autocmd BufNewFile,BufRead *.ntc NtcHighlightReload
+autocmd BufNewFile,BufRead *.ntc NtcSyntaxReload
 if !exists('g:NoToCDefaultKeys') || g:NoToCDefaultKeys == 1
 	autocmd BufEnter *.ntc nnoremap <silent><buffer> <CR>     :NtcTodoControl<CR>
 	autocmd BufEnter *.ntc nnoremap <silent><buffer> <C-o>    :NtcNewItem<CR>
@@ -36,7 +36,7 @@ command! -nargs=0 NtcTodoControl call s:TodoControl()
 command! -nargs=0 NtcNewItem call s:ItemAct(0)
 command! -nargs=0 NtcTypeChange call s:ItemAct(1)
 command! -nargs=0 NtcYankItem call s:YankItem()
-command! -nargs=0 NtcHighlightReload call s:LoadSyntax()
+command! -nargs=0 NtcSyntaxReload call s:LoadSyntax()
 command! -nargs=0 NtcItemPrev call s:JumpNode(0, 'up')
 command! -nargs=0 NtcItemNext call s:JumpNode(0, 'down')
 command! -nargs=0 NtcLevelItemPrev call s:JumpNode(1, 'up')
